@@ -10,14 +10,15 @@ public class Master : MonoBehaviour {
     MeshGenerator mesh;
     Text input;
     WebRequest API;
-    string textInput, lastWord, currentWord;
+    List<string> textInput = new List<string>();
+    string wordCache;
+    public WordCandidateList wordCandidates = new WordCandidateList();
     public double capitalizeDelay = 1.5;
 
     public Texture2D cursorTexture;
 
     void Start () {
         API = this.GetComponent<WebRequest>();
-        API.SendReset();
         mesh = this.GetComponent<MeshGenerator>();
         input = this.GetComponent<Text>();
         mesh.SetSize((int)(Screen.height * 0.3));
@@ -29,6 +30,8 @@ public class Master : MonoBehaviour {
         //Vector2 hotSpot = new Vector2(cursorTexture.width/2, cursorTexture.height/2);
         Vector2 hotSpot = new Vector2(4, 4);
         Cursor.SetCursor(cursorTexture, hotSpot, cursorMode);
+
+        textInput.Add(string.Empty);
     }
 	
 	void Update () {
@@ -40,6 +43,13 @@ public class Master : MonoBehaviour {
             buttonContainer.SetActive(false);
             buttonScript.tempSelect = "";
         }
+
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            input.text = string.Empty;
+            textInput.Clear();
+            textInput.Add(string.Empty);
+            wordCandidates.clear();
+        }
     }
     
     private void OnMouseEnter() {
@@ -50,41 +60,38 @@ public class Master : MonoBehaviour {
                     buttonScript.Toggle();
                     break;
                 case "/space":
-                    // On space, add current word+" " to input.text and reset currentWord/update last word
-                    textInput = textInput + lastWord;
-                    API.SendNext(currentWord);
-                    lastWord = currentWord + " ";
-                    currentWord = "";
+                    wordCache = textInput[textInput.Count - 1].Clone().ToString();
+                    API.SendNext(textInput[textInput.Count - 1]);
+                    textInput.Add(string.Empty);
                     break;
                 case "/backspace":
-                    if (currentWord.Length > 0) {
-                        currentWord = currentWord.Remove(currentWord.Length - 1);
-                    }
-                    else if (lastWord.Length > 0) {
-                        currentWord = lastWord;
-                        lastWord = textInput.Split(' ')[textInput.Split(' ').Length - 1];
-                        currentWord = currentWord.Remove(currentWord.Length - 1);
-                    }
-                    else if (textInput.Length > 0) {
-                        textInput = textInput.Remove(input.text.Length - 1);
+                    if (textInput[textInput.Count - 1].Length > 0) {
+                        if (buttonScript.delay > capitalizeDelay) textInput[textInput.Count - 1] = string.Empty;
+                        else textInput[textInput.Count - 1] = textInput[textInput.Count - 1].Remove(textInput[textInput.Count - 1].Length - 1);
+                        wordCandidates.backspace();
+                        API.SendRequest(wordCandidates.getList());
+                    } else {
+                        if (textInput.Count > 1) textInput.RemoveAt(textInput.Count - 1);
+                        textInput[textInput.Count - 1] = wordCache.Clone().ToString();
+                        wordCandidates.input(new string[] { textInput[textInput.Count - 1] });
+                        API.SendRequest(wordCandidates.getList());
                     }
                     break;
                 default:
-                    // input.text = base + currentWord
                     if (buttonScript.tempSelect.Length > 1) {
-                        textInput = textInput + lastWord;
+                        wordCache = textInput[textInput.Count - 1].Clone().ToString();
+                        textInput[textInput.Count - 1] = buttonScript.tempSelect;
+                        textInput.Add(string.Empty);
                         API.SendNext(buttonScript.tempSelect);
-                        lastWord = buttonScript.tempSelect + " ";
-                        currentWord = "";
-                    }
-                    else {
+                    } else {
                         if (buttonScript.delay > capitalizeDelay) buttonScript.tempSelect = buttonScript.tempSelect.ToUpper();
-                        currentWord += buttonScript.tempSelect;
-                        API.SendRequest(buttonScript.tempSelection);
+                        textInput[textInput.Count - 1] += buttonScript.tempSelect;
+                        wordCandidates.input(buttonScript.tempSelection);
+                        API.SendRequest(wordCandidates.getList());
                     }
                     break;
             }
-            input.text = textInput + lastWord + currentWord;
+            input.text = string.Join(" ", textInput.ToArray());
             buttonScript.tempSelect = "";
         }
     }

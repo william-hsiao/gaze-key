@@ -26,6 +26,7 @@ public class ButtonContainer : MonoBehaviour {
     public string tempSelect;
     public string[] tempSelection;
     string[][] letters = { new string[] { }, new string[] { "a", "b", "c", "d", "e", "f", "g", "h", "i" }, new string[] { "j", "k", "l", "m", "n", "o", "p", "q", "r" }, new string[] { "s", "t", "u", "v", "w", "x", "y", "z" } };
+    //string[][] letters = { new string[] { }, new string[] { "e", "t", "a", "o", "i", "n", "s", "r", "h" }, new string[] { "d", "l", "u", "c", "m", "f", "y", "w", "g" }, new string[] { "p", "b", "v", "k", "x", "q", "j", "z" } };
 
     public float delay;
 
@@ -57,7 +58,16 @@ public class ButtonContainer : MonoBehaviour {
     //EVENTS ===============================================================
     void Selection (string value) {
         tempSelect = value;
-        tempSelection = new string[] { value };
+
+        if (!(value == "/toggle" || value == "/space" || value == "/backspace")) {
+            List<string> selection = new List<string>();
+            int index = Array.IndexOf(letters[n], value);
+            selection.Add(letters[n][index]);
+            if (index > 0) selection.Add(letters[n][index - 1]);
+            if (index < letters[n].Length - 1) selection.Add(letters[n][index + 1]);
+
+            tempSelection = selection.ToArray();
+        }
         delay = 0;
     }
 

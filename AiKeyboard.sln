@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2017
+# Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiKeyboard", "AiKeyboard.csproj", "{13E50E82-FF28-38A3-3186-96C9EE274B01}"
 EndProject
 Global
